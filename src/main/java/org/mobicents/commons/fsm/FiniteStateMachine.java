@@ -62,30 +62,30 @@ public abstract class FiniteStateMachine implements EventHandler {
       throws TransitionFailedException, TransitionNotFoundException {
     while(!lock.tryLock()) { /* Spin! */ }
     try {
-      if(canTransitionTo(newState)) {
-        final Transition transition = getTransitionTo(newState);
-        final Condition condition = transition.getCondition();
-        if(condition != null) {
-          if(condition.accept(event, transition)) {
-            final Action actionOnExit = state.getActionOnExit();
-            if(actionOnExit != null) {
-              actionOnExit.execute(event, state);
-            }
-            state = newState;
-            final Action actionOnEnter = newState.getActionOnEnter();
-            if(actionOnEnter != null) {
-              actionOnEnter.execute(event, state);
-            }
-          } else {
-            throw new TransitionFailedException("The condition guarding the transition did not pass.",
-                event, transition);
-          }
-        }
-      } else {
+      if(!canTransitionTo(newState)) {
         final StringBuilder buffer = new StringBuilder();
-        buffer.append("No transition could be found from ").append(state.getId()).append(" ");
+        buffer.append("No transition could be found from ");
+        buffer.append(state.getId()).append(" ");
         buffer.append("to ").append(newState.getId());
         throw new TransitionNotFoundException(buffer.toString(), event, newState);
+      }
+      final Transition transition = getTransitionTo(newState);
+      final Condition condition = transition.getCondition();
+      if(condition != null) {
+        if(condition.accept(event, transition)) {
+          final Action actionOnExit = state.getActionOnExit();
+          if(actionOnExit != null) {
+            actionOnExit.execute(event, state);
+          }
+          state = newState;
+          final Action actionOnEnter = newState.getActionOnEnter();
+          if(actionOnEnter != null) {
+            actionOnEnter.execute(event, state);
+          }
+        } else {
+          throw new TransitionFailedException("The condition guarding the transition did not pass.",
+              event, transition);
+        }
       }
     } finally {
       lock.unlock();
