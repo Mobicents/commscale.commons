@@ -16,10 +16,12 @@
  */
 package org.mobicents.commons.event;
 
+import org.mobicents.commons.annotations.NotThreadSafe;
+
 /**
  * @author quintana.thomas@gmail.com (Thomas Quintana)
  */
-public abstract class Event<T> {
+@NotThreadSafe public class Event<T> {
   private final Object source;
   private final Long timestamp;
   private final T type;
@@ -30,6 +32,17 @@ public abstract class Event<T> {
     this.source = source;
     this.timestamp = timestamp;
     this.type = type;
+  }
+  
+  private void checkNotNull(final Object source, final Long timestamp, final T type)
+      throws NullPointerException {
+    if(source == null) {
+      throw new NullPointerException("An event may not have a null source.");
+    } else if(timestamp == null) {
+      throw new NullPointerException("An event may not have a null timestamp.");
+    } else if(type == null) {
+      throw new NullPointerException("An event may not have a null type.");
+    }
   }
 
   @Override public boolean equals(final Object object) {
@@ -66,16 +79,5 @@ public abstract class Event<T> {
 	result = prime * result + timestamp.hashCode();
 	result = prime * result + type.hashCode();
 	return result;
-  }
-  
-  private void checkNotNull(final Object source, final Long timestamp, final T type)
-      throws NullPointerException {
-    if(source == null) {
-      throw new NullPointerException("An event may not have a null source.");
-    } else if(timestamp == null) {
-      throw new NullPointerException("An event may not have a null timestamp.");
-    } else if(type == null) {
-      throw new NullPointerException("An event may not have a null type.");
-    }
   }
 }

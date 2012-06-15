@@ -22,5 +22,5 @@ import org.mobicents.commons.event.Event;
  * @author quintana.thomas@gmail.com (Thomas Quintana)
  */
 public interface Action {
-  public void execute(Event<?> event, State state);
+  public <T> void execute(Event<T> event, State state);
 }

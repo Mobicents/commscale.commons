@@ -23,18 +23,18 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.mobicents.commons.annotations.NotThreadSafe;
 import org.mobicents.commons.event.Event;
-import org.mobicents.commons.event.EventHandler;
 
 /**
  * @author quintana.thomas@gmail.com (Thomas Quintana)
  */
-public abstract class FiniteStateMachine implements EventHandler {
+@NotThreadSafe public abstract class FiniteStateMachine {
   private final Lock lock;
   private State state;
   private Map<State, Map<State, Transition>> transitions;
   
-  public FiniteStateMachine() {
+  protected FiniteStateMachine() {
     super();
     this.lock = new ReentrantLock();
   }
@@ -43,33 +43,91 @@ public abstract class FiniteStateMachine implements EventHandler {
     return transitions.get(state).containsKey(newState);
   }
   
-  protected State getState() {
-    while(!lock.tryLock()) { /* Spin! */ }
-    try { return state; }
-    finally { lock.unlock(); }
+  private void checkIsInitialized() throws FiniteStateMachineException {
+    if(state == null || transitions == null) {
+      final StringBuilder buffer = new StringBuilder();
+      buffer.append("The finite state machine has not been initialized. ");
+      buffer.append("Please initialize the state machine before using it.");
+      throw new FiniteStateMachineException(buffer.toString());
+    }
+  }
+  
+  private void checkNotNull(final State state) throws NullPointerException {
+    if(state == null) {
+      final StringBuilder buffer = new StringBuilder();
+      buffer.append("The state parameter can not be null. ");
+      buffer.append("Please provide a usable state and try again.");
+      throw new NullPointerException(buffer.toString());
+    }
+  }
+  
+  private void checkNotNull(final State state, final Set<Transition> transitions)
+      throws NullPointerException {
+    checkNotNull(state);
+    if(transitions == null) {
+      final StringBuilder buffer = new StringBuilder();
+      buffer.append("The transitions parameter can not be null. ");
+      buffer.append("Please provide a set of transitions and try again.");
+      throw new NullPointerException(buffer.toString());
+    }
+  }
+  
+  private String conditionFailed(final Event<?> event, final Transition transition) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("The condition guarding a transition from a(n) ");
+    buffer.append(transition.getStateOnEnter().getId());
+    buffer.append(" state to a(n) ").append(transition.getStateOnExit().getId());
+    buffer.append(" state has failed. The event type that caused the failure is of type ");
+    buffer.append(event.getType().getClass().getName());
+    return buffer.toString();
+  }
+  
+  private String finiteStateMachineFailed() {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("This finite state machine failed. It may be in an illegal or unusable state.");
+    buffer.append("Please re-initialize before continuing use of this finite state machine.");
+    return buffer.toString();
   }
   
   private Transition getTransitionTo(final State newState) {
     return transitions.get(state).get(newState);
   }
   
-  protected void initialize(final State stateOnStart, final Set<Transition> transitions) {
-    this.state = stateOnStart;
-    this.transitions = toImmutableMap(transitions);
+  protected void initialize(final State state, final Set<Transition> transitions) {
+    checkNotNull(state, transitions);
+    lock();
+    try {
+      this.state = state;
+      this.transitions = toImmutableMap(transitions);
+    } finally {
+      unlock();
+    }
   }
   
-  protected void transition(final Event<?> event, final State newState)
-      throws TransitionFailedException, TransitionNotFoundException {
-    while(!lock.tryLock()) { /* Spin! */ }
+  protected void lock() {
+    lock.lock();
+  }
+  
+  private String noTransitionFound(final State from, final State to) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("No transition could be found from a(n) ");
+    buffer.append(from.getId()).append(" state to a(n) ");
+    buffer.append(to.getId()).append(" state.");
+    return buffer.toString();
+  }
+  
+  protected <T> void transition(final Event<T> event, final State state)
+      throws FiniteStateMachineException, NullPointerException,
+      TransitionFailedException, TransitionNotFoundException {
+    checkNotNull(state);
+    checkIsInitialized();
+    lock();
     try {
-      if(!canTransitionTo(newState)) {
-        final StringBuilder buffer = new StringBuilder();
-        buffer.append("No transition could be found from ");
-        buffer.append(state.getId()).append(" ");
-        buffer.append("to ").append(newState.getId());
-        throw new TransitionNotFoundException(buffer.toString(), event, newState);
+      if(!canTransitionTo(state)) {
+        final String message = noTransitionFound(state, state);
+        throw new TransitionNotFoundException(message, event, state);
       }
-      final Transition transition = getTransitionTo(newState);
+      final Transition transition = getTransitionTo(state);
       final Condition condition = transition.getCondition();
       if(condition != null) {
         if(condition.accept(event, transition)) {
@@ -77,18 +135,21 @@ public abstract class FiniteStateMachine implements EventHandler {
           if(actionOnExit != null) {
             actionOnExit.execute(event, state);
           }
-          state = newState;
-          final Action actionOnEnter = newState.getActionOnEnter();
+          this.state = state;
+          final Action actionOnEnter = state.getActionOnEnter();
           if(actionOnEnter != null) {
             actionOnEnter.execute(event, state);
           }
         } else {
-          throw new TransitionFailedException("The condition guarding the transition did not pass.",
-              event, transition);
+          final String message = conditionFailed(event, transition);
+          throw new TransitionFailedException(message, event, transition);
         }
       }
+    } catch(final RuntimeException exception) {
+      final String message = finiteStateMachineFailed();
+      throw new FiniteStateMachineException(message, exception);
     } finally {
-      lock.unlock();
+      unlock();
     }
   }
   
@@ -103,5 +164,13 @@ public abstract class FiniteStateMachine implements EventHandler {
       map.get(stateOnEnter).put(stateOnExit, transition);
     }
     return Collections.unmodifiableMap(map);
+  }
+  
+  protected boolean tryLock() {
+    return lock.tryLock();
+  }
+  
+  protected void unlock() {
+    lock.unlock();
   }
 }

@@ -89,7 +89,7 @@ import org.mobicents.commons.annotations.ThreadSafe;
     }
     
     public EventBus build() {
-      validate();
+      checkNotNull(executor);
       final AbstractSet<EventHandler> handlers = new CopyOnWriteArraySet<EventHandler>();
       final BlockingQueue<Event<?>> queue = new ArrayBlockingQueue<Event<?>>(queueSize);
       final List<Dispatcher> dispatchers = new ArrayList<Dispatcher>();
@@ -97,6 +97,16 @@ import org.mobicents.commons.annotations.ThreadSafe;
         dispatchers.add(new Dispatcher(handlers, queue));
       }
       return new EventBus(Collections.unmodifiableList(dispatchers), executor, handlers, queue);
+    }
+    
+    private void checkNotNull(final Executor executor) throws NullPointerException {
+  	  if(executor == null) {
+        final StringBuilder buffer = new StringBuilder();
+        buffer.append("An event bus can not be built with a null value for the executor.\n");
+        buffer.append("Please set an executor before calling the build() method on ");
+        buffer.append(getClass().getName());
+        throw new NullPointerException(buffer.toString());
+      }
     }
     
     public Builder setExecutor(final Executor executor) {
@@ -112,16 +122,6 @@ import org.mobicents.commons.annotations.ThreadSafe;
     public Builder setQueueSize(final int queueSize) {
       this.queueSize = queueSize;
       return this;
-    }
-    
-    private void validate() throws RuntimeException {
-	  if(executor == null) {
-        final StringBuilder buffer = new StringBuilder();
-        buffer.append("An event bus can not be built with a null value for the executor.\n");
-        buffer.append("Please set an executor before calling the build() method on ");
-        buffer.append(getClass().getName());
-        throw new NullPointerException(buffer.toString());
-      }
     }
   }
   
@@ -148,8 +148,8 @@ import org.mobicents.commons.annotations.ThreadSafe;
           for(final EventHandler handler : handlers) {
             if(logger.isTraceEnabled()) {
               final StringBuilder buffer = new StringBuilder();
-              buffer.append("Processing a(n) ");
-              buffer.append(event.getType().toString()).append(" event.\n");
+              buffer.append("Processing a(n) event of type ");
+              buffer.append(event.getType().toString()).append(".\n");
               buffer.append(event.toString());
               logger.trace(buffer.toString());
             }

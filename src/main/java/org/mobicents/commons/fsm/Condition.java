@@ -22,5 +22,5 @@ import org.mobicents.commons.event.Event;
  * @author quintana.thomas@gmail.com (Thomas Quintana)
  */
 public interface Condition {
-  public boolean accept(Event<?> event, Transition transition);
+  public <T> boolean accept(Event<T> event, Transition transition);
 }

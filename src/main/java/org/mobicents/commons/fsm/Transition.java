@@ -49,6 +49,20 @@ import org.mobicents.commons.annotations.Immutable;
     }
   }
   
+  @Override public boolean equals(final Object object) {
+  	if(this == object) {
+  	  return true;
+  	} else if(object == null) {
+  	  return false;
+  	} else if(getClass() != object.getClass()) {
+  	  return false;
+  	}
+  	final Transition transition = (Transition)object;
+  	if(!stateOnEnter.equals(transition.getStateOnEnter())) { return false; }
+  	if(!stateOnExit.equals(transition.getStateOnExit())) { return false; }
+  	return true;
+  }
+  
   public Condition getCondition() {
     return condition;
   }
@@ -59,5 +73,13 @@ import org.mobicents.commons.annotations.Immutable;
   
   public State getStateOnExit() {
     return stateOnExit;
+  }
+  
+  @Override public int hashCode() { 
+  	final int prime = 31;
+  	int result = 1;
+  	result = prime * result + stateOnEnter.hashCode();
+  	result = prime * result + stateOnExit.hashCode();
+  	return result;
   }
 }

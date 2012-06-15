@@ -30,30 +30,6 @@ import org.mobicents.commons.annotations.ThreadSafe;
   }
   
   @Test public void test() {
-    // Initialize
-    final LightBulb lightbulb = new IncandescentLightBulb();
-    final LightBulbSocket socket = new LightBulbSocket(lightbulb);
-    final RemoteSwitch remote = new RemoteSwitch(socket);
-    // Can't turn off a socket that is already off.
-    remote.turnOff();
-    assertTrue(lightbulb.getTimesTurnedOff() == 0);
-    // Turn on the socket and verify.
-    remote.turnOn();
-    assertTrue(lightbulb.getTimesTurnedOn() == 1);
-    // Turn off the socket and verify.
-    remote.turnOff();
-    assertTrue(lightbulb.getTimesTurnedOff() == 1);
-    // Try to turn on the socket twice.
-    remote.turnOn();
-    remote.turnOn();
-    // Turn off the socket.
-    remote.turnOff();
-    // Turn on the socket.
-    remote.turnOn();
-    // Turn off the socket.
-    remote.turnOff();
-    // Verify that transitions between states were executed successfully.
-    assertTrue(lightbulb.getTimesTurnedOff() == 3);
-    assertTrue(lightbulb.getTimesTurnedOn() == 3);
+    
   }
 }

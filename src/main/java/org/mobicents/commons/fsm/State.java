@@ -16,12 +16,12 @@
  */
 package org.mobicents.commons.fsm;
 
-import org.mobicents.commons.annotations.Immutable;
+import org.mobicents.commons.annotations.NotThreadSafe;
 
 /**
  * @author quintana.thomas@gmail.com (Thomas Quintana)
  */
-@Immutable public final class State {
+@NotThreadSafe public class State {
   private final Action actionOnEnter;
   private final Action actionOnExit;
   private final String id;
@@ -34,10 +34,10 @@ import org.mobicents.commons.annotations.Immutable;
     this.id = id;
   }
   
-  private void checkNotNull(final String type) throws NullPointerException {
-    if(type == null) {
+  private void checkNotNull(final String id) throws NullPointerException {
+    if(id == null) {
       final StringBuilder buffer = new StringBuilder();
-      buffer.append("A state can not be built with a null value for the type.");
+      buffer.append("A state can not be built with a null value for the id parameter.");
       throw new NullPointerException(buffer.toString());
     }
   }
