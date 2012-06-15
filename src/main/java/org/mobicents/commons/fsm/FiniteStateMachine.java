@@ -39,8 +39,8 @@ import org.mobicents.commons.event.Event;
     this.lock = new ReentrantLock();
   }
   
-  private boolean canTransitionTo(final State newState) {
-    return transitions.get(state).containsKey(newState);
+  private boolean canTransitionTo(final State state) {
+    return transitions.get(this.state).containsKey(state);
   }
   
   private void checkIsInitialized() throws FiniteStateMachineException {
@@ -89,8 +89,17 @@ import org.mobicents.commons.event.Event;
     return buffer.toString();
   }
   
-  private Transition getTransitionTo(final State newState) {
-    return transitions.get(state).get(newState);
+  protected State getState() {
+    lock();
+    try {
+      return state;
+    } finally {
+      unlock();
+    }
+  }
+  
+  private Transition getTransitionTo(final State state) {
+    return transitions.get(this.state).get(state);
   }
   
   protected void initialize(final State state, final Set<Transition> transitions) {
@@ -124,26 +133,28 @@ import org.mobicents.commons.event.Event;
     lock();
     try {
       if(!canTransitionTo(state)) {
-        final String message = noTransitionFound(state, state);
+        final String message = noTransitionFound(this.state, state);
         throw new TransitionNotFoundException(message, event, state);
       }
       final Transition transition = getTransitionTo(state);
       final Condition condition = transition.getCondition();
+      boolean accept = true;
       if(condition != null) {
-        if(condition.accept(event, transition)) {
-          final Action actionOnExit = state.getActionOnExit();
-          if(actionOnExit != null) {
-            actionOnExit.execute(event, state);
-          }
-          this.state = state;
-          final Action actionOnEnter = state.getActionOnEnter();
-          if(actionOnEnter != null) {
-            actionOnEnter.execute(event, state);
-          }
-        } else {
-          final String message = conditionFailed(event, transition);
-          throw new TransitionFailedException(message, event, transition);
+        accept = condition.accept(event, transition);
+      }
+      if(accept) {
+        final Action actionOnExit = this.state.getActionOnExit();
+        if(actionOnExit != null) {
+          actionOnExit.execute(event, this.state);
         }
+        this.state = state;
+        final Action actionOnEnter = this.state.getActionOnEnter();
+        if(actionOnEnter != null) {
+          actionOnEnter.execute(event, this.state);
+        }
+      } else {
+        final String message = conditionFailed(event, transition);
+        throw new TransitionFailedException(message, event, transition);
       }
     } catch(final RuntimeException exception) {
       final String message = finiteStateMachineFailed();

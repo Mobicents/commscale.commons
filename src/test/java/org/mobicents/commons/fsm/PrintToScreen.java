@@ -16,41 +16,18 @@
  */
 package org.mobicents.commons.fsm;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.*;
-import org.junit.Test;
-
 import org.mobicents.commons.annotations.ThreadSafe;
+import org.mobicents.commons.event.Event;
 
 /**
  * @author quintana.thomas@gmail.com (Thomas Quintana)
  */
-@ThreadSafe public final class FiniteStateMachineTest {
-  public FiniteStateMachineTest() {
+@ThreadSafe public final class PrintToScreen implements Action {
+  public PrintToScreen() {
     super();
   }
-  
-  @Test public void test() throws InterruptedException {
-    final ExecutorService executor = Executors.newFixedThreadPool(4);
-    final LightBulb bulb = new LightBulb();
-    for(int counter = 0; counter < 4; counter++) {
-      flipSwitch(executor, bulb, 5);
-    }
-    executor.shutdown();
-    executor.awaitTermination(30, TimeUnit.SECONDS);
-    assertTrue(bulb.getCount() == 20);
-  }
-  
-  private void flipSwitch(final ExecutorService executor, final LightBulb bulb, final int times) {
-    executor.execute(new Runnable() {
-      @Override public void run() {
-        for(int counter = 0; counter < times; counter++) {
-          bulb.power();
-        }
-      }
-    });
+
+  @Override public <T> void execute(final Event<T> event, final State state) {
+    System.out.println(state.getId());
   }
 }

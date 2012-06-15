@@ -21,10 +21,12 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.mobicents.commons.annotations.NotThreadSafe;
+
 /**
  * @author quintana.thomas@gmail.com (Thomas Quintana)
  */
-public abstract class AbstractHandler implements EventHandler {
+@NotThreadSafe public abstract class AbstractHandler implements EventHandler {
   private final AtomicInteger counter;
   
   public AbstractHandler() {
