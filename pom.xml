@@ -2,10 +2,17 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.mobicents</groupId>
-	<artifactId>commons</artifactId>
+	<parent>
+		<groupId>org.mobicents</groupId>
+		<artifactId>mobicents-parent</artifactId>
+		<version>2.25-SNAPSHOT</version>
+	</parent>
+
+	<groupId>org.mobicents.commons</groupId>
+	<artifactId>commons-parent</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
-	<name>Mobicents Commons Packages</name>
+	<name>Mobicents Commons Packages Parent</name>
+	<packaging>pom</packaging>
 	<url>https://code.google.com/p/commscale/</url>
 
 	<developers>
@@ -17,6 +24,17 @@
 			<organizationUrl>http://www.telestax.com/</organizationUrl>
 			<roles>
 				<role>RestComm Project Lead</role>
+			</roles>
+			<timezone>0</timezone>
+		</developer>
+		<developer>
+			<id>jean.deruelle</id>
+			<name>Jean Deruelle</name>
+			<email>jean.deruelle@telestax.com</email>
+			<organization>TeleStax, Inc.</organization>
+			<organizationUrl>http://www.telestax.com/</organizationUrl>
+			<roles>
+				<role>SIP Servlets Project Lead</role>
 			</roles>
 			<timezone>0</timezone>
 		</developer>
@@ -51,10 +69,15 @@
 
 	<properties>
 		<slf4j.version>1.5.5</slf4j.version>
-		<log4j.version>1.2.16</log4j.version>
-		<easymock.version>3.1</easymock.version>
+		<log4j.version>1.2.16</log4j.version>	
 		<junit.version>4.8.2</junit.version>
 	</properties>
+
+	<modules>
+		<module>annotations</module>
+		<module>concurrent</module>
+		<module>fsm</module>
+	</modules>
 
 	<dependencies>
 		<dependency>
@@ -71,17 +94,45 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.easymock</groupId>
-			<artifactId>easymock</artifactId>
-			<version>${easymock.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-eclipse-plugin</artifactId>
+   				<groupId>org.mobicents.tools</groupId>
+    				<version>${mobicents.tools.mavenplugin.eclipse.version}</version>
+				<inherited>false</inherited>
+				<executions />
+				<configuration>				
+					<!--generateProjectsForModules>true</generateProjectsForModules-->	
+					<resolveTransitiveDependencies>true</resolveTransitiveDependencies>
+					<eclipseProjectName>scommons</eclipseProjectName>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
+	<!--  repositories  -->
+	<repositories>
+		<repository>
+			<id>mobicents-public-repository-group</id>
+			<name>Mobicens Public Maven Repository Group</name>
+			<url>https://oss.sonatype.org/content/groups/public</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
 </project>
