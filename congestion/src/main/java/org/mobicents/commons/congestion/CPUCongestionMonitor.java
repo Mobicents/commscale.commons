@@ -20,68 +20,82 @@
 
 package org.mobicents.commons.congestion;
 
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+
+import javax.management.MBeanServerConnection;
+
 import javolution.util.FastList;
 
 import org.apache.log4j.Logger;
 
 /**
- * @author amit bhayani
  * 
+ * @author jean.deruelle@gmail.com
+ *
  */
-public class MemoryCongestionMonitor implements CongestionMonitor {
-	private static final Logger logger = Logger.getLogger(MemoryCongestionMonitor.class);
+public class CPUCongestionMonitor implements CongestionMonitor {
+	private static final Logger logger = Logger.getLogger(CPUCongestionMonitor.class);
 
-	private static final String SOURCE = "MEMORY";
+	private static final String SOURCE = "CPU";
 
 	private final FastList<CongestionListener> listeners = new FastList<CongestionListener>();
 
-	private double maxMemory;
-	private volatile double percentageOfMemoryUsed;
+	private OperatingSystemMXBean osMBean;
+	private volatile double percentageOfCPUUsed;
 
-	private volatile boolean memoryTooHigh = false;
+	private volatile boolean cpuTooHigh = false;
 
-	private int backToNormalMemoryThreshold;
+	private int backToNormalCPUThreshold;
 
-	private int memoryThreshold;
+	private int cpuThreshold;
 
-	public MemoryCongestionMonitor() {
-		maxMemory = Runtime.getRuntime().maxMemory() / (double) 1024;
+	public CPUCongestionMonitor() {
+		MBeanServerConnection mbsc = ManagementFactory.getPlatformMBeanServer();
+		
+		try {
+			osMBean = ManagementFactory.newPlatformMXBeanProxy(
+			mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME, OperatingSystemMXBean.class);
+		} catch (IOException e) {
+			logger.error("Couldn't get the java.lang:type=OperatingSystem MBean", e);
+		}
 	}
 
 	/**
 	 * @param backToNormalPercentageOfMemoryUsed
 	 *            the backToNormalPercentageOfMemoryUsed to set
 	 */
-	public void setBackToNormalMemoryThreshold(int backToNormalMemoryThreshold) {
-		this.backToNormalMemoryThreshold = backToNormalMemoryThreshold;
+	public void setBackToNormalCPUThreshold(int backToNormalCPUThreshold) {
+		this.backToNormalCPUThreshold = backToNormalCPUThreshold;
 		if (logger.isInfoEnabled()) {
-			logger.info("Back To Normal Memory threshold set to " + backToNormalMemoryThreshold + "%");
+			logger.info("Back To Normal CPU threshold set to " + backToNormalCPUThreshold + "%");
 		}
 	}
 
 	/**
-	 * @return the backToNormalPercentageOfMemoryUsed
+	 * @return the backToNormalPercentageOfCPUThreshold
 	 */
-	public int getBackToNormalMemoryThreshold() {
-		return backToNormalMemoryThreshold;
+	public int getBackToNormalCPUThreshold() {
+		return backToNormalCPUThreshold;
 	}
 
 	/**
-	 * @param memoryThreshold
-	 *            the memoryThreshold to set
+	 * @param cpuThreshold
+	 *            the cpuThreshold to set
 	 */
-	public void setMemoryThreshold(int memoryThreshold) {
-		this.memoryThreshold = memoryThreshold;
+	public void setCPUThreshold(int cpuThreshold) {
+		this.cpuThreshold = cpuThreshold;
 		if (logger.isInfoEnabled()) {
-			logger.info("Memory threshold set to " + this.memoryThreshold + "%");
+			logger.info("CPU threshold set to " + this.cpuThreshold + "%");
 		}
 	}
 
 	/**
-	 * @return the memoryThreshold
+	 * @return the cpuThreshold
 	 */
-	public int getMemoryThreshold() {
-		return memoryThreshold;
+	public int getCPUThreshold() {
+		return cpuThreshold;
 	}
 
 	/*
@@ -90,19 +104,18 @@ public class MemoryCongestionMonitor implements CongestionMonitor {
 	 */
 	@Override
 	public void monitor() {
-		Runtime runtime = Runtime.getRuntime();
+		if(osMBean == null) {
+			return;
+		}
 
-		double allocatedMemory = runtime.totalMemory() / (double) 1024;
-		double freeMemory = runtime.freeMemory() / (double) 1024;
-
-		double totalFreeMemory = freeMemory + (maxMemory - allocatedMemory);
-
-		this.percentageOfMemoryUsed = (((double) 100) - ((totalFreeMemory / maxMemory) * ((double) 100)));
-
-		if (this.memoryTooHigh) {
-			if (this.percentageOfMemoryUsed < this.backToNormalMemoryThreshold) {
-				logger.warn("Memory used: " + percentageOfMemoryUsed + "% < to the back to normal memory threshold : " + this.backToNormalMemoryThreshold);
-				this.memoryTooHigh = false;
+		percentageOfCPUUsed = osMBean.getSystemLoadAverage();
+		if(logger.isTraceEnabled()) {
+			logger.trace("System Load Average = " + percentageOfCPUUsed);
+		}
+		if (this.cpuTooHigh) {
+			if (this.percentageOfCPUUsed < this.backToNormalCPUThreshold) {
+				logger.warn("Memory used: " + percentageOfCPUUsed + "% < to the back to normal CPU threshold : " + this.backToNormalCPUThreshold);
+				this.cpuTooHigh = false;
 
 				// Lets notify the listeners
 				for (FastList.Node<CongestionListener> n = listeners.head(), end = listeners.tail(); (n = n.getNext()) != end;) {
@@ -111,9 +124,9 @@ public class MemoryCongestionMonitor implements CongestionMonitor {
 				}
 			}
 		} else {
-			if (this.percentageOfMemoryUsed > memoryThreshold) {
-				logger.warn("Memory used: " + percentageOfMemoryUsed + "% > to the memory threshold : " + this.memoryThreshold);
-				this.memoryTooHigh = true;
+			if (this.percentageOfCPUUsed > cpuThreshold) {
+				logger.warn("Memory used: " + percentageOfCPUUsed + "% > to the CPU threshold : " + this.cpuThreshold);
+				this.cpuTooHigh = true;
 
 				// Lets notify the listeners
 				for (FastList.Node<CongestionListener> n = listeners.head(), end = listeners.tail(); (n = n.getNext()) != end;) {

@@ -68,10 +68,7 @@
 	</scm>
 
 	<properties>
-		<slf4j.version>1.5.5</slf4j.version>
-		<log4j.version>1.2.16</log4j.version>	
-		<junit.version>4.8.2</junit.version>
-		<javolution.version>5.5.1</javolution.version>
+		<junit.version>4.8.2</junit.version>		
 	</properties>
 
 	<modules>
