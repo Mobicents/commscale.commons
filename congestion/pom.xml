@@ -17,7 +17,7 @@
 			<groupId>javolution</groupId>
 			<artifactId>javolution</artifactId>
 			<version>${javolution.version}</version>			
-		</dependency>
+		</dependency>	
 	</dependencies>
 
 </project>

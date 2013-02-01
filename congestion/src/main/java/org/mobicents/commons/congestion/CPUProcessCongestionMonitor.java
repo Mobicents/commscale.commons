@@ -20,11 +20,8 @@
 
 package org.mobicents.commons.congestion;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
-
-import javax.management.MBeanServerConnection;
 
 import javolution.util.FastList;
 
@@ -35,38 +32,37 @@ import org.apache.log4j.Logger;
  * @author jean.deruelle@gmail.com
  *
  */
-public class CPUCongestionMonitor implements CongestionMonitor {
-	private static final Logger logger = Logger.getLogger(CPUCongestionMonitor.class);
+public class CPUProcessCongestionMonitor implements CongestionMonitor {
+	private static final Logger logger = Logger.getLogger(CPUProcessCongestionMonitor.class);
 
 	private static final String SOURCE = "CPU";
 
 	private final FastList<CongestionListener> listeners = new FastList<CongestionListener>();
 
 	private OperatingSystemMXBean osMBean;
+	private int  availableProcessors;
+    private long lastSystemTime      = 0;
+    private long lastProcessCpuTime  = 0;
+	
 	private volatile double percentageOfCPUUsed;
 
 	private volatile boolean cpuTooHigh = false;
 
-	private int backToNormalCPUThreshold;
+	private double backToNormalCPUThreshold;
 
-	private int cpuThreshold;
+	private double cpuThreshold;
 
-	public CPUCongestionMonitor() {
-		MBeanServerConnection mbsc = ManagementFactory.getPlatformMBeanServer();
-		
-		try {
-			osMBean = ManagementFactory.newPlatformMXBeanProxy(
-			mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME, OperatingSystemMXBean.class);
-		} catch (IOException e) {
-			logger.error("Couldn't get the java.lang:type=OperatingSystem MBean", e);
-		}
+	public CPUProcessCongestionMonitor() {
+		osMBean = ManagementFactory.getOperatingSystemMXBean();
+		availableProcessors = osMBean.getAvailableProcessors();
+		baselineCounters();
 	}
 
 	/**
-	 * @param backToNormalPercentageOfMemoryUsed
-	 *            the backToNormalPercentageOfMemoryUsed to set
+	 * @param backToNormalPercentageOfCPUUsed
+	 *            the backToNormalPercentageOfCPUUsed to set
 	 */
-	public void setBackToNormalCPUThreshold(int backToNormalCPUThreshold) {
+	public void setBackToNormalCPUThreshold(double backToNormalCPUThreshold) {
 		this.backToNormalCPUThreshold = backToNormalCPUThreshold;
 		if (logger.isInfoEnabled()) {
 			logger.info("Back To Normal CPU threshold set to " + backToNormalCPUThreshold + "%");
@@ -76,7 +72,7 @@ public class CPUCongestionMonitor implements CongestionMonitor {
 	/**
 	 * @return the backToNormalPercentageOfCPUThreshold
 	 */
-	public int getBackToNormalCPUThreshold() {
+	public double getBackToNormalCPUThreshold() {
 		return backToNormalCPUThreshold;
 	}
 
@@ -84,7 +80,7 @@ public class CPUCongestionMonitor implements CongestionMonitor {
 	 * @param cpuThreshold
 	 *            the cpuThreshold to set
 	 */
-	public void setCPUThreshold(int cpuThreshold) {
+	public void setCPUThreshold(double cpuThreshold) {
 		this.cpuThreshold = cpuThreshold;
 		if (logger.isInfoEnabled()) {
 			logger.info("CPU threshold set to " + this.cpuThreshold + "%");
@@ -94,7 +90,7 @@ public class CPUCongestionMonitor implements CongestionMonitor {
 	/**
 	 * @return the cpuThreshold
 	 */
-	public int getCPUThreshold() {
+	public double getCPUThreshold() {
 		return cpuThreshold;
 	}
 
@@ -108,13 +104,13 @@ public class CPUCongestionMonitor implements CongestionMonitor {
 			return;
 		}
 
-		percentageOfCPUUsed = osMBean.getSystemLoadAverage();
-		if(logger.isTraceEnabled()) {
-			logger.trace("System Load Average = " + percentageOfCPUUsed);
+		percentageOfCPUUsed = getCpuUsage();
+		if(logger.isDebugEnabled()) {
+			logger.debug("CPU Process Load Average = " + percentageOfCPUUsed);
 		}
 		if (this.cpuTooHigh) {
 			if (this.percentageOfCPUUsed < this.backToNormalCPUThreshold) {
-				logger.warn("Memory used: " + percentageOfCPUUsed + "% < to the back to normal CPU threshold : " + this.backToNormalCPUThreshold);
+				logger.warn("CPU used: " + percentageOfCPUUsed + "% < to the back to normal CPU threshold : " + this.backToNormalCPUThreshold);
 				this.cpuTooHigh = false;
 
 				// Lets notify the listeners
@@ -125,7 +121,7 @@ public class CPUCongestionMonitor implements CongestionMonitor {
 			}
 		} else {
 			if (this.percentageOfCPUUsed > cpuThreshold) {
-				logger.warn("Memory used: " + percentageOfCPUUsed + "% > to the CPU threshold : " + this.cpuThreshold);
+				logger.warn("CPU used: " + percentageOfCPUUsed + "% > to the CPU threshold : " + this.cpuThreshold);
 				this.cpuTooHigh = true;
 
 				// Lets notify the listeners
@@ -136,6 +132,34 @@ public class CPUCongestionMonitor implements CongestionMonitor {
 			}
 		}
 
+	}
+	
+
+	public synchronized double getCpuUsage() {
+		long systemTime = System.nanoTime();
+		long processCpuTime = 0;
+
+		if (osMBean instanceof OperatingSystemMXBean) {
+			processCpuTime = ((com.sun.management.OperatingSystemMXBean) osMBean)
+					.getProcessCpuTime();
+		}
+
+		double cpuUsage = (double) (processCpuTime - lastProcessCpuTime)
+				/ (systemTime - lastSystemTime);
+
+		lastSystemTime = systemTime;
+		lastProcessCpuTime = processCpuTime;
+
+		return cpuUsage / availableProcessors;
+	}
+
+	private void baselineCounters() {
+		lastSystemTime = System.nanoTime();
+
+		if (osMBean instanceof OperatingSystemMXBean) {
+			lastProcessCpuTime = ((com.sun.management.OperatingSystemMXBean) osMBean)
+					.getProcessCpuTime();
+		}
 	}
 
 	/*
