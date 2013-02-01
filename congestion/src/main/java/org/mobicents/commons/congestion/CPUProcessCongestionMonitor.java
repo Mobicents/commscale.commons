@@ -28,6 +28,10 @@ import javolution.util.FastList;
 import org.apache.log4j.Logger;
 
 /**
+ * This Congestion Monitor monitors whether or not the CPU Process usage has crossed 
+ * the cpuThreshold and notifies its listeners. 
+ * If it has then it monitors if the CPU Process usage has reduced
+ * and come under the backToNormalCPUThreshold and notifies its listeners
  * 
  * @author jean.deruelle@gmail.com
  *

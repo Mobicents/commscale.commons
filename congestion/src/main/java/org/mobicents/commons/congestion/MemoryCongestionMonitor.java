@@ -25,7 +25,13 @@ import javolution.util.FastList;
 import org.apache.log4j.Logger;
 
 /**
+ * This Congestion Monitor monitors whether or not the JVM memory usage has crossed 
+ * the memoryThreshold and notifies its listeners. 
+ * If it has then it monitors if the JVM memory usage has reduced
+ * and come under the backToNormalMemoryThreshold and notifies its listeners
+ * 
  * @author amit bhayani
+ * @author jean.deruelle@gmail.com
  * 
  */
 public class MemoryCongestionMonitor implements CongestionMonitor {
