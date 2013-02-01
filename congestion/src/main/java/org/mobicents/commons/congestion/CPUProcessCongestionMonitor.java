@@ -105,8 +105,8 @@ public class CPUProcessCongestionMonitor implements CongestionMonitor {
 		}
 
 		percentageOfCPUUsed = getCpuUsage();
-		if(logger.isDebugEnabled()) {
-			logger.debug("CPU Process Load Average = " + percentageOfCPUUsed);
+		if(logger.isTraceEnabled()) {
+			logger.trace("CPU Process Load Average = " + percentageOfCPUUsed);
 		}
 		if (this.cpuTooHigh) {
 			if (this.percentageOfCPUUsed < this.backToNormalCPUThreshold) {
