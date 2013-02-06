@@ -105,6 +105,9 @@ public class MemoryCongestionMonitor implements CongestionMonitor {
 
 		this.percentageOfMemoryUsed = (((double) 100) - ((totalFreeMemory / maxMemory) * ((double) 100)));
 
+		if(logger.isTraceEnabled()) {
+			logger.trace("Percentage of Memory Used = " + percentageOfMemoryUsed);
+		}
 		if (this.memoryTooHigh) {
 			if (this.percentageOfMemoryUsed < this.backToNormalMemoryThreshold) {
 				logger.warn("Memory used: " + percentageOfMemoryUsed + "% < to the back to normal memory threshold : " + this.backToNormalMemoryThreshold);
