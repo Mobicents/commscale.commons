@@ -10,7 +10,7 @@
 
 	<groupId>org.mobicents.commons</groupId>
 	<artifactId>commons-parent</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.124</version>
 	<name>Mobicents Commons Packages Parent</name>
 	<packaging>pom</packaging>
 	<url>https://code.google.com/p/commscale/</url>
