@@ -53,27 +53,28 @@ public class RestcommStatsSender {
      * Sends statistics to a remote server.
      * @param values Map containing the statistics values.
      * @param statsType Statistics type (Gauge, Counter, Histogram, Meter and Timer).
+     * @param serverAddress Remoter server adrress.
      */
-    public static void sendStats(Map<String, Object> values, String statsType) {
-        Response res = client.target(UriBuilder.fromPath(remoteServer.concat(statsType))).
-                request("application/json").post(Entity.json(gson.toJson(values)));
-        if (res.getStatus() != 200) {
-            LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{res.getStatus(), 
-                                                  res.getStatusInfo().getReasonPhrase()});
+    public static void sendStats(Map<String, Object> values, String statsType, String serverAddress) {
+        if (serverAddress != null) {
+            remoteServer = serverAddress;
         }
-
-        //close response channel
-        res.close();
+        sendStats(values, statsType);
     }
     
     /**
      * Sends statistics to a remote server.
      * @param values Map containing the statistics values.
      * @param statsType Statistics type (Gauge, Counter, Histogram, Meter and Timer).
-     * @param serverAddress Remoter server adrress.
      */
-    public static void sendStats(Map<String, Object> values, String statsType, String serverAddress) {
-        remoteServer = serverAddress;
-        sendStats(values, statsType);
+    public static void sendStats(Map<String, Object> values, String statsType) {
+        Response res = client.target(UriBuilder.fromPath(remoteServer.concat(statsType))).
+                                                     request("application/json").post(Entity.json(gson.toJson(values)));
+        if (res.getStatus() != 200) {
+            LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{res.getStatus(), res.getStatusInfo().getReasonPhrase()});
+        }
+
+        //close response channel
+        res.close();
     }
 }

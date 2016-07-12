@@ -36,6 +36,7 @@ public class RestcommStatsReporter extends ScheduledReporter {
 
     private final Clock clock;
     private Map<String, Object> values;
+    private String remoteServer;
 
     public RestcommStatsReporter(MetricRegistry registry,
             MetricFilter filter,
@@ -45,11 +46,11 @@ public class RestcommStatsReporter extends ScheduledReporter {
         super(registry, "restcomm-stats-reporter", filter, rateUnit, durationUnit);
         this.clock = clock;
     }
-
+    
     public static Builder forRegistry(MetricRegistry registry) {
         return new Builder(registry);
     }
-
+    
     @Override
     public void report(SortedMap<String, Gauge> gauges,
             SortedMap<String, Counter> counters,
@@ -66,7 +67,7 @@ public class RestcommStatsReporter extends ScheduledReporter {
             values.put("timestamp", timestamp);
             values.put("key", gauge.getKey());
             values.put("value", gauge.getValue().getValue());
-            RestcommStatsSender.sendStats(values, "gauge");
+            RestcommStatsSender.sendStats(values, "gauge", this.remoteServer);
         }
 
         //Process Counter Metrics
@@ -75,7 +76,7 @@ public class RestcommStatsReporter extends ScheduledReporter {
             values.put("timestamp", timestamp);
             values.put("key", counter.getKey());
             values.put("count", counter.getValue().getCount());
-            RestcommStatsSender.sendStats(values, "counter");
+            RestcommStatsSender.sendStats(values, "counter", this.remoteServer);
         }
 
         //Process Histogram Metrics
@@ -95,7 +96,7 @@ public class RestcommStatsReporter extends ScheduledReporter {
             values.put("98th", hist.getValue().getSnapshot().get98thPercentile());
             values.put("99th", hist.getValue().getSnapshot().get99thPercentile());
             values.put("999th", hist.getValue().getSnapshot().get999thPercentile());
-            RestcommStatsSender.sendStats(values, "histogram");
+            RestcommStatsSender.sendStats(values, "histogram", this.remoteServer);
         }
 
         //Process Meter Metrics
@@ -108,7 +109,7 @@ public class RestcommStatsReporter extends ScheduledReporter {
             values.put("fiveMinuteRate", meter.getValue().getFiveMinuteRate());
             values.put("meanRate", meter.getValue().getMeanRate());
             values.put("oneMinuteRate", meter.getValue().getOneMinuteRate());
-            RestcommStatsSender.sendStats(values, "meter");
+            RestcommStatsSender.sendStats(values, "meter", this.remoteServer);
         }
 
         //Process Timer Metrics
@@ -132,10 +133,18 @@ public class RestcommStatsReporter extends ScheduledReporter {
             values.put("98th", timer.getValue().getSnapshot().get98thPercentile());
             values.put("99th", timer.getValue().getSnapshot().get99thPercentile());
             values.put("999th", timer.getValue().getSnapshot().get999thPercentile());
-            RestcommStatsSender.sendStats(values, "timer");
+            RestcommStatsSender.sendStats(values, "timer", this.remoteServer);
         }
     }
 
+    public String getRemoteServer() {
+        return remoteServer;
+    }
+
+    public void setRemoteServer(String remoteServer) {
+        this.remoteServer = remoteServer;
+    }
+    
     /**
      * Static Builder Class
      */

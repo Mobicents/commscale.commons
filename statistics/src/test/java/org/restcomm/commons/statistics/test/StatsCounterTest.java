@@ -42,8 +42,10 @@ public class StatsCounterTest {
     @Test
     public void meterStats() throws Exception {
         //start reporter
-        RestcommStatsReporter statsReporter = 
-                             RestcommStatsReporter.forRegistry(metrics).build();
+        RestcommStatsReporter statsReporter = RestcommStatsReporter.forRegistry(metrics).build();
+        
+        //define remote server address (optionally)
+        statsReporter.setRemoteServer("http://localhost:8080/statistics/rest/");
         
         //define periodicy
         statsReporter.start(10, TimeUnit.SECONDS);
@@ -56,10 +58,10 @@ public class StatsCounterTest {
             //increment request events
             counter.inc(i);
             //simulate interval
-            Thread.sleep(100);
+            Thread.sleep(1000);
         }
         
         //simulate interval
-        Thread.sleep(1000);
+        Thread.sleep(2000);
     }
 }
