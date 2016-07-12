@@ -5,12 +5,12 @@
 
 	<parent>
 		<artifactId>commons-parent</artifactId>
-		<groupId>org.mobicents.commons</groupId>
-		<version>1.0.0-SNAPSHOT</version>
+		<groupId>org.restcomm.commons</groupId>
+		<version>2.0.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>commons-congestion</artifactId>
-	<name>Mobicents Commons Congestion</name>
+	<name>Restcomm Commons Congestion</name>
 
 	<dependencies>
 		<dependency>

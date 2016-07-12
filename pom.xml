@@ -3,17 +3,17 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.mobicents</groupId>
-		<artifactId>mobicents-parent</artifactId>
-		<version>2.27.4</version>
+		<groupId>org.restcomm</groupId>
+		<artifactId>restcomm-parent</artifactId>
+		<version>3.0.4</version>
 	</parent>
 
-	<groupId>org.mobicents.commons</groupId>
+	<groupId>org.restcomm.commons</groupId>
 	<artifactId>commons-parent</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
-	<name>Mobicents Commons Packages Parent</name>
+	<version>2.0.0-SNAPSHOT</version>
+	<name>Restcomm Commons Packages Parent</name>
 	<packaging>pom</packaging>
-	<url>https://code.google.com/p/commscale/</url>
+	<url>https://github.com/RestComm/commons/</url>
 
 	<developers>
 		<developer>
@@ -42,29 +42,29 @@
 
 	<licenses>
 		<license>
-			<name>GNU LESSER GENERAL PUBLIC LICENSE</name>
-			<url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
+			<name>GNU AFFERO GENERAL PUBLIC LICENSE</name>
+			<url>https://www.gnu.org/licenses/agpl-3.0.html</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
 
 	<distributionManagement>
 		<repository>
-			<id>mobicents-releases-repository</id>
-			<name>Mobicents Releases Repository</name>
+			<id>restcomm-releases-repository</id>
+			<name>Restcomm Releases Repository</name>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
 		</repository>
 		<snapshotRepository>
-			<id>mobicents-snapshots-repository</id>
-			<name>Mobicents Snapshots Repository</name>
+			<id>restcomm-snapshots-repository</id>
+			<name>Restcomm Snapshots Repository</name>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:git:https://code.google.com/p/commscale.commons/</connection>
-		<developerConnection>scm:git:https://code.google.com/p/commscale.commons/</developerConnection>
-		<url>https://code.google.com/p/commscale.commons/</url>
+		<connection>scm:git:https://github.com/RestComm/commons/</connection>
+		<developerConnection>scm:git:https://github.com/RestComm/commons/</developerConnection>
+		<url>https://github.com/RestComm/commons/</url>
 	</scm>
 
 	<properties>
@@ -76,6 +76,7 @@
 		<module>annotations</module>
 		<module>concurrent</module>
 		<module>fsm</module>
+		<module>statistics</module>
 	</modules>
 
 	<dependencies>
@@ -105,13 +106,13 @@
 			<plugin>
 				<artifactId>maven-eclipse-plugin</artifactId>
    				<groupId>org.mobicents.tools</groupId>
-    				<version>${mobicents.tools.mavenplugin.eclipse.version}</version>
+    				<version>${restcomm.tools.mavenplugin.eclipse.version}</version>
 				<inherited>false</inherited>
 				<executions />
 				<configuration>				
 					<!--generateProjectsForModules>true</generateProjectsForModules-->	
 					<resolveTransitiveDependencies>true</resolveTransitiveDependencies>
-					<eclipseProjectName>scommons</eclipseProjectName>
+					<eclipseProjectName>restcomm-commons</eclipseProjectName>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -120,8 +121,8 @@
 	<!--  repositories  -->
 	<repositories>
 		<repository>
-			<id>mobicents-public-repository-group</id>
-			<name>Mobicens Public Maven Repository Group</name>
+			<id>restcomm-public-repository-group</id>
+			<name>Restcommm Public Maven Repository Group</name>
 			<url>https://oss.sonatype.org/content/groups/public</url>
 			<layout>default</layout>
 			<releases>
