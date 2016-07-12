@@ -36,7 +36,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
  */
 public class RestcommStatsSender {
 
-    private static final String PATH;
+    private static String remoteServer;
     private static ResteasyClient client;
     private static Gson gson = new Gson();
     private static final Logger LOGGER = Logger.getLogger("restcomm-stats");
@@ -44,13 +44,18 @@ public class RestcommStatsSender {
 
     static {
         //retrieve path
-        PATH = ResourceBundle.getBundle("config").getString("remote-server");
+        remoteServer = ResourceBundle.getBundle("config").getString("remote-server");
         //initialize client builder
         client = new ResteasyClientBuilder().build();
     }
 
+    /**
+     * Sends statistics to a remote server.
+     * @param values Map containing the statistics values.
+     * @param statsType Statistics type (Gauge, Counter, Histogram, Meter and Timer).
+     */
     public static void sendStats(Map<String, Object> values, String statsType) {
-        Response res = client.target(UriBuilder.fromPath(PATH.concat(statsType))).
+        Response res = client.target(UriBuilder.fromPath(remoteServer.concat(statsType))).
                 request("application/json").post(Entity.json(gson.toJson(values)));
         if (res.getStatus() != 200) {
             LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{res.getStatus(), 
@@ -59,5 +64,16 @@ public class RestcommStatsSender {
 
         //close response channel
         res.close();
+    }
+    
+    /**
+     * Sends statistics to a remote server.
+     * @param values Map containing the statistics values.
+     * @param statsType Statistics type (Gauge, Counter, Histogram, Meter and Timer).
+     * @param serverAddress Remoter server adrress.
+     */
+    public static void sendStats(Map<String, Object> values, String statsType, String serverAddress) {
+        remoteServer = serverAddress;
+        sendStats(values, statsType);
     }
 }
