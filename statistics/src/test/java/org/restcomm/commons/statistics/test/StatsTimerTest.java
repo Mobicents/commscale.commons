@@ -20,7 +20,9 @@ package org.restcomm.commons.statistics.test;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+
 import java.util.concurrent.TimeUnit;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.restcomm.commons.statistics.reporter.RestcommStatsReporter;
@@ -59,7 +61,8 @@ public class StatsTimerTest {
         //stop clock
         context.stop();
         
-        //simulate enviroment
-        Thread.sleep(1000);
+        statsReporter.stop();
+        //simulate interval
+        Thread.sleep(5000);
     }
 }

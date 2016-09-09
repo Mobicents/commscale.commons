@@ -20,7 +20,9 @@ package org.restcomm.commons.statistics.test;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+
 import java.util.concurrent.TimeUnit;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.restcomm.commons.statistics.reporter.RestcommStatsReporter;
@@ -57,5 +59,8 @@ public class StatsHistogramTest {
             //simulate interval
             Thread.sleep(1000);
         }
+        statsReporter.stop();
+        //simulate interval
+        Thread.sleep(5000);
     }
 }
