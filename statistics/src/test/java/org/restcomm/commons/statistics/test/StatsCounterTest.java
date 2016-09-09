@@ -68,7 +68,7 @@ public class StatsCounterTest {
             //simulate interval
             Thread.sleep(1000);
         }
-        statsReporter.stop();
+//        statsReporter.stop();
         //simulate interval
         Thread.sleep(5000);
     }

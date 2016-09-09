@@ -50,7 +50,7 @@ public class StatsHistogramTest {
         statsReporter.start(1, TimeUnit.SECONDS);
 
         //define metric name
-        Histogram histogram = metrics.histogram("sip-requests");
+        Histogram histogram = metrics.histogram("sip-responses");
 
         //simulate metric sender
         for (int i = 0; i < 10; i++) {
@@ -59,7 +59,7 @@ public class StatsHistogramTest {
             //simulate interval
             Thread.sleep(1000);
         }
-        statsReporter.stop();
+//        statsReporter.stop();
         //simulate interval
         Thread.sleep(5000);
     }

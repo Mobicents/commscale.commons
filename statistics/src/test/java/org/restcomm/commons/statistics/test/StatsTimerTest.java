@@ -61,7 +61,7 @@ public class StatsTimerTest {
         //stop clock
         context.stop();
         
-        statsReporter.stop();
+//        statsReporter.stop();
         //simulate interval
         Thread.sleep(5000);
     }

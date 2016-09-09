@@ -224,6 +224,11 @@ public class RestcommStatsReporter extends ScheduledReporter {
     	super.stop();
     }
     
+    @Override
+    public void start(long period, TimeUnit unit) {
+    	super.start(period, unit);
+    }
+    
     public String getProjectName() {
 		return projectName;
 	}
