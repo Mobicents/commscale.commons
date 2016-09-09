@@ -36,32 +36,40 @@ public class StatsCounterTest {
 
     @BeforeClass
     public static void setup() {
-        metrics = new MetricRegistry();
     }
     
     @Test
     public void meterStats() throws Exception {
         //start reporter
-        RestcommStatsReporter statsReporter = RestcommStatsReporter.forRegistry(metrics).build();
+    	RestcommStatsReporter statsReporter = RestcommStatsReporter.getRestcommStatsReporter();
+        metrics = RestcommStatsReporter.getMetricRegistry();
         
         //define remote server address (optionally)
-        statsReporter.setRemoteServer("http://localhost:8080/statistics/rest/");
-        
+        statsReporter.setRemoteServer("http://192.168.0.44/rest/");
+        statsReporter.setProjectName("sipservlets");
+        statsReporter.setProjectType("community");
+        statsReporter.setVersion("3.0.0.GA");
         //define periodicy
         statsReporter.start(10, TimeUnit.SECONDS);
 
         //define metric name
-        Counter counter = metrics.counter("sip-invites");
+        Counter counterCalls = metrics.counter("calls");
+        Counter counterMinutes = metrics.counter("minutes");
+        Counter counterMessages = metrics.counter("messages");
 
+        
         //simulate metric sender
-        for (int i = 0; i < 10; i++) {
+        for (int i = 1; i < 100; i++) {
             //increment request events
-            counter.inc(i);
+            counterCalls.inc(i);
+            counterMinutes.inc(i);
+            counterMessages.inc(i);
+            System.out.println(counterCalls.getCount());
             //simulate interval
             Thread.sleep(1000);
         }
-        
+        statsReporter.stop();
         //simulate interval
-        Thread.sleep(2000);
+        //Thread.sleep(5000);
     }
 }

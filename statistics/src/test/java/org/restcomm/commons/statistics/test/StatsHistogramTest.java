@@ -42,8 +42,8 @@ public class StatsHistogramTest {
     @Test
     public void meterStats() throws Exception {
         //start reporter
-        RestcommStatsReporter statsReporter = 
-                             RestcommStatsReporter.forRegistry(metrics).build();
+        RestcommStatsReporter statsReporter = RestcommStatsReporter.getRestcommStatsReporter();
+        metrics = RestcommStatsReporter.getMetricRegistry();
         
         //define periodicy
         statsReporter.start(1, TimeUnit.SECONDS);

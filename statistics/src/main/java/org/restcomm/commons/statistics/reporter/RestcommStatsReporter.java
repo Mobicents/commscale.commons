@@ -18,12 +18,22 @@
  */
 package org.restcomm.commons.statistics.reporter;
 
-import com.codahale.metrics.*;
-import com.codahale.metrics.Timer;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
+
 import org.restcomm.commons.statistics.sender.RestcommStatsSender;
+
+import com.codahale.metrics.Clock;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Timer;
 
 /**
  * This class represents a reporter that implements persistence (into the central server) for statistical events
@@ -34,21 +44,33 @@ import org.restcomm.commons.statistics.sender.RestcommStatsSender;
  */
 public class RestcommStatsReporter extends ScheduledReporter {
 
-    private final Clock clock;
+	private static final MetricRegistry metricRegistry;
+    private static final Clock clock;
     private Map<String, Object> values;
     private String remoteServer;
+    private String projectName;
+    private String projectType;
+    private String version;
+    private static final TimeUnit rateUnit;
+    private static final TimeUnit durationUnit;
+    private static final MetricFilter filter;
 
-    public RestcommStatsReporter(MetricRegistry registry,
+    private static RestcommStatsReporter restcommStatsReporter;
+    
+    static {
+    	metricRegistry = new MetricRegistry();
+        clock = Clock.defaultClock();
+        rateUnit = TimeUnit.SECONDS;
+        durationUnit = TimeUnit.MILLISECONDS;
+        filter = MetricFilter.ALL;
+    }
+
+    public RestcommStatsReporter(
             MetricFilter filter,
             TimeUnit rateUnit,
             TimeUnit durationUnit,
             Clock clock) {
-        super(registry, "restcomm-stats-reporter", filter, rateUnit, durationUnit);
-        this.clock = clock;
-    }
-    
-    public static Builder forRegistry(MetricRegistry registry) {
-        return new Builder(registry);
+        super(getMetricRegistry(), "restcomm-stats-reporter", filter, rateUnit, durationUnit);
     }
     
     @Override
@@ -58,12 +80,19 @@ public class RestcommStatsReporter extends ScheduledReporter {
             SortedMap<String, Meter> meters,
             SortedMap<String, Timer> timers) {
 
-        final long timestamp = clock.getTime();
-
-        
         //Process Gauge Metrics
         for (Map.Entry<String, Gauge> gauge : gauges.entrySet()) {
             values = new HashMap<>();
+            if(getProjectName() != null) {
+            	values.put("project", getProjectName());
+            }
+            if(getProjectName() != null) {
+            	values.put("type", getProjectType());
+            }
+            if(getVersion() != null) {
+            	values.put("version", getVersion());
+            }
+            final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
             values.put("key", gauge.getKey());
             values.put("value", gauge.getValue().getValue());
@@ -73,15 +102,42 @@ public class RestcommStatsReporter extends ScheduledReporter {
         //Process Counter Metrics
         for (Map.Entry<String, Counter> counter : counters.entrySet()) {
             values = new HashMap<>();
+            if(getProjectName() != null) {
+            	values.put("project", getProjectName());
+            }
+            if(getProjectName() != null) {
+            	values.put("type", getProjectType());
+            }
+            if(getVersion() != null) {
+            	values.put("version", getVersion());
+            }
+            long count = counter.getValue().getCount();
+            final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
             values.put("key", counter.getKey());
-            values.put("count", counter.getValue().getCount());
-            RestcommStatsSender.sendStats(values, "counter", this.remoteServer);
+            values.put("count", count);
+            boolean sent = RestcommStatsSender.sendStats(values, "counter", this.remoteServer);
+            if(sent) {
+            	// we decrease by what was sent so we have concurrency handled in case the counter was updated in the meanwhile
+            	// and also to avoid resending the count that was already sent as on the server side we do a sum for everthing that was stored
+            	// this happens only in case of a successful sent.
+            	counter.getValue().dec(count);
+            }
         }
 
         //Process Histogram Metrics
         for (Map.Entry<String, Histogram> hist : histograms.entrySet()) {
             values = new HashMap<>();
+            if(getProjectName() != null) {
+            	values.put("project", getProjectName());
+            }
+            if(getProjectName() != null) {
+            	values.put("type", getProjectType());
+            }
+            if(getVersion() != null) {
+            	values.put("version", getVersion());
+            }
+            final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
             values.put("key", hist.getKey());
             values.put("count", hist.getValue().getCount());
@@ -102,6 +158,16 @@ public class RestcommStatsReporter extends ScheduledReporter {
         //Process Meter Metrics
         for (Map.Entry<String, Meter> meter : meters.entrySet()) {
             values = new HashMap<>();
+            if(getProjectName() != null) {
+            	values.put("project", getProjectName());
+            }
+            if(getProjectName() != null) {
+            	values.put("type", getProjectType());
+            }
+            if(getVersion() != null) {
+            	values.put("version", getVersion());
+            }
+            final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
             values.put("key", meter.getKey());
             values.put("count", meter.getValue().getCount());
@@ -115,6 +181,13 @@ public class RestcommStatsReporter extends ScheduledReporter {
         //Process Timer Metrics
         for (Map.Entry<String, Timer> timer : timers.entrySet()) {
             values = new HashMap<>();
+            if(getProjectName() != null) {
+            	values.put("project", getProjectName());
+            }
+            if(getVersion() != null) {
+            	values.put("version", getVersion());
+            }
+            final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
             values.put("key", timer.getKey());
             values.put("count", timer.getValue().getCount());
@@ -145,31 +218,48 @@ public class RestcommStatsReporter extends ScheduledReporter {
         this.remoteServer = remoteServer;
     }
     
-    /**
-     * Static Builder Class
-     */
-    public static class Builder {
-
-        private final MetricRegistry registry;
-        private final Clock clock;
-        private final TimeUnit rateUnit;
-        private final TimeUnit durationUnit;
-        private final MetricFilter filter;
-
-        private Builder(MetricRegistry registry) {
-            this.registry = registry;
-            this.clock = Clock.defaultClock();
-            this.rateUnit = TimeUnit.SECONDS;
-            this.durationUnit = TimeUnit.MILLISECONDS;
-            this.filter = MetricFilter.ALL;
-        }
-
-        public RestcommStatsReporter build() {
-            return new RestcommStatsReporter(registry,
-                    filter,
-                    rateUnit,
-                    durationUnit,
-                    clock);
-        }
+    @Override
+    public void stop() {
+    	report();
+    	super.stop();
     }
+    
+    public String getProjectName() {
+		return projectName;
+	}
+
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public String getProjectType() {
+		return projectType;
+	}
+
+	public void setProjectType(String projectType) {
+		this.projectType = projectType;
+	}
+
+	public static synchronized RestcommStatsReporter getRestcommStatsReporter() {
+    	if (restcommStatsReporter == null) {
+    		restcommStatsReporter = new RestcommStatsReporter(
+                filter,
+                rateUnit,
+                durationUnit,
+                clock);
+    	}
+    	return restcommStatsReporter;
+    }
+
+	public static MetricRegistry getMetricRegistry() {
+		return metricRegistry;
+	}
 }

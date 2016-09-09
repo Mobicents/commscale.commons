@@ -18,17 +18,21 @@
  */
 package org.restcomm.commons.statistics.sender;
 
-import com.google.gson.Gson;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
-import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+
+import com.google.gson.Gson;
 
 /**
  *
@@ -40,7 +44,6 @@ public class RestcommStatsSender {
     private static ResteasyClient client;
     private static Gson gson = new Gson();
     private static final Logger LOGGER = Logger.getLogger("restcomm-stats");
-    private static Properties properties;
 
     static {
         //retrieve path
@@ -55,11 +58,11 @@ public class RestcommStatsSender {
      * @param statsType Statistics type (Gauge, Counter, Histogram, Meter and Timer).
      * @param serverAddress Remoter server adrress.
      */
-    public static void sendStats(Map<String, Object> values, String statsType, String serverAddress) {
+    public static boolean sendStats(Map<String, Object> values, String statsType, String serverAddress) {
         if (serverAddress != null) {
             remoteServer = serverAddress;
         }
-        sendStats(values, statsType);
+        return sendStats(values, statsType);
     }
     
     /**
@@ -67,14 +70,34 @@ public class RestcommStatsSender {
      * @param values Map containing the statistics values.
      * @param statsType Statistics type (Gauge, Counter, Histogram, Meter and Timer).
      */
-    public static void sendStats(Map<String, Object> values, String statsType) {
-        Response res = client.target(UriBuilder.fromPath(remoteServer.concat(statsType))).
-                                                     request("application/json").post(Entity.json(gson.toJson(values)));
-        if (res.getStatus() != 200) {
-            LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{res.getStatus(), res.getStatusInfo().getReasonPhrase()});
-        }
-
-        //close response channel
-        res.close();
+    public static boolean sendStats(Map<String, Object> values, String statsType) {
+    	String jsonString = gson.toJson(values);
+    	if(LOGGER.isLoggable(Level.FINE)) {
+    		LOGGER.log(Level.FINE, "send Stats {0} to {1}", new Object[]{jsonString, remoteServer});
+    	}
+    	try {
+	        Response res = client.target(UriBuilder.fromPath(remoteServer.concat(statsType))).
+	                                                     request("application/json").post(Entity.json(jsonString ));
+	        if (res.getStatus() > 200) {
+	            LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{res.getStatus(), res.getStatusInfo().getReasonPhrase()});
+	            res.close();
+	            return false;
+	        } else {
+	        	if(LOGGER.isLoggable(Level.FINE)) {
+	        		LOGGER.log(Level.FINE, "{0} - {1}", new Object[]{res.getStatus(), res.getStatusInfo().getReasonPhrase()});
+	        	}
+	        	res.close();
+	        	return true;
+	        }
+    	} catch(Exception e) {
+    		if(LOGGER.isLoggable(Level.INFO)) {
+    			if(e.getCause() != null) {
+    				LOGGER.log(Level.INFO, "couldn't send stats data to " + remoteServer + " because of " + e.getMessage() + ", root cause: " + e.getCause().getMessage());
+    			} else {
+    				LOGGER.log(Level.INFO, "couldn't send stats data to " + remoteServer + " because of " + e.getMessage());
+    			}
+        	}
+    		return false;
+    	}
     }
 }
