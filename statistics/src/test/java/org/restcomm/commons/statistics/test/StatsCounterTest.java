@@ -59,7 +59,7 @@ public class StatsCounterTest {
 
         
         //simulate metric sender
-        for (int i = 1; i < 100; i++) {
+        for (int i = 1; i < 10; i++) {
             //increment request events
             counterCalls.inc(i);
             counterMinutes.inc(i);
@@ -70,6 +70,6 @@ public class StatsCounterTest {
         }
         statsReporter.stop();
         //simulate interval
-        //Thread.sleep(5000);
+        Thread.sleep(5000);
     }
 }

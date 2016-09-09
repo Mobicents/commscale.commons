@@ -36,7 +36,6 @@ public class StatsHistogramTest {
 
     @BeforeClass
     public static void setup() {
-        metrics = new MetricRegistry();
     }
     
     @Test
