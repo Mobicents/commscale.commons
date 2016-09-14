@@ -45,7 +45,7 @@ public class StatsCounterTest {
         metrics = RestcommStatsReporter.getMetricRegistry();
         
         //define remote server address (optionally)
-        statsReporter.setRemoteServer("http://192.168.0.44/rest/");
+        statsReporter.setRemoteServer("https://192.168.0.44/rest/");
         statsReporter.setProjectName("sipservlets");
         statsReporter.setProjectType("community");
         statsReporter.setVersion("3.0.0.GA");
@@ -54,7 +54,7 @@ public class StatsCounterTest {
 
         //define metric name
         Counter counterCalls = metrics.counter("calls");
-        Counter counterMinutes = metrics.counter("minutes");
+        Counter counterSeconds = metrics.counter("seconds");
         Counter counterMessages = metrics.counter("messages");
 
         
@@ -62,7 +62,7 @@ public class StatsCounterTest {
         for (int i = 1; i < 10; i++) {
             //increment request events
             counterCalls.inc(i);
-            counterMinutes.inc(i);
+            counterSeconds.inc(i*10);
             counterMessages.inc(i);
             System.out.println(counterCalls.getCount());
             //simulate interval

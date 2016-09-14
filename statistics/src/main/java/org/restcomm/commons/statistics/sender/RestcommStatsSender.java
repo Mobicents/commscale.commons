@@ -18,19 +18,31 @@
  */
 package org.restcomm.commons.statistics.sender;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.IOException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
+import javax.net.ssl.SSLContext;
 
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.TrustStrategy;
 
 import com.google.gson.Gson;
 
@@ -41,15 +53,13 @@ import com.google.gson.Gson;
 public class RestcommStatsSender {
 
     private static String remoteServer;
-    private static ResteasyClient client;
+//    private static HttpClient client;
     private static Gson gson = new Gson();
     private static final Logger LOGGER = Logger.getLogger("restcomm-stats");
 
     static {
         //retrieve path
         remoteServer = ResourceBundle.getBundle("config").getString("remote-server");
-        //initialize client builder
-        client = new ResteasyClientBuilder().build();
     }
 
     /**
@@ -75,18 +85,39 @@ public class RestcommStatsSender {
     	if(LOGGER.isLoggable(Level.FINE)) {
     		LOGGER.log(Level.FINE, "send Stats {0} to {1}", new Object[]{jsonString, remoteServer});
     	}
+    	CloseableHttpClient client = null;
     	try {
-	        Response res = client.target(UriBuilder.fromPath(remoteServer.concat(statsType))).
-	                                                     request("application/json").post(Entity.json(jsonString ));
-	        if (res.getStatus() > 200) {
-	            LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{res.getStatus(), res.getStatusInfo().getReasonPhrase()});
-	            res.close();
+	    	RequestConfig requestConfig = RequestConfig.custom()
+	                .setConnectTimeout(10000)
+	                .setConnectionRequestTimeout(10000)
+	                .setSocketTimeout(10000)
+	                .setCookieSpec(CookieSpecs.STANDARD).build();
+	    	client = HttpClients.custom().
+                    setSslcontext(new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy()
+                    {
+                        public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException
+                        {
+                            return true;
+                        }
+                    }).build()).setDefaultRequestConfig(requestConfig).build();
+		
+    	
+//	        Response res = client.target(UriBuilder.fromPath(remoteServer.concat(statsType))).
+//	                                                     request("application/json").post(Entity.json(jsonString ));
+    		
+    		HttpPost post = new HttpPost(remoteServer.concat(statsType));
+            StringEntity se = new StringEntity(jsonString);
+            se.setContentType(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
+            post.setEntity(se);
+            HttpResponse response = client.execute(post);
+    		
+	        if (response.getStatusLine().getStatusCode() > 200) {
+	            LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase()});
 	            return false;
 	        } else {
 	        	if(LOGGER.isLoggable(Level.FINE)) {
-	        		LOGGER.log(Level.FINE, "{0} - {1}", new Object[]{res.getStatus(), res.getStatusInfo().getReasonPhrase()});
+	        		LOGGER.log(Level.FINE, "{0} - {1}", new Object[]{response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase()});
 	        	}
-	        	res.close();
 	        	return true;
 	        }
     	} catch(Exception e) {
@@ -98,6 +129,15 @@ public class RestcommStatsSender {
     			}
         	}
     		return false;
+    	} finally {
+    		try {
+    			if(client != null)
+    				client.close();
+			} catch (IOException e) {
+				if(LOGGER.isLoggable(Level.INFO)) {
+					LOGGER.log(Level.INFO, "couldn't close the httpclient for " + remoteServer + " because of " + e.getMessage());
+				}
+			}
     	}
     }
 }
