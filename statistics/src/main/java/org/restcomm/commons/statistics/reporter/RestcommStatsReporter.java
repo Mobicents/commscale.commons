@@ -64,6 +64,10 @@ public class RestcommStatsReporter extends ScheduledReporter {
         durationUnit = TimeUnit.MILLISECONDS;
         filter = MetricFilter.ALL;
     }
+    
+    public RestcommStatsReporter() {
+        super(getMetricRegistry(), "restcomm-stats-reporter", filter, rateUnit, durationUnit);
+    }    
 
     public RestcommStatsReporter(
             MetricFilter filter,
