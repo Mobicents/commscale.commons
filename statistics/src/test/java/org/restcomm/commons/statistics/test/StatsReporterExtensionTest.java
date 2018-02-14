@@ -14,7 +14,7 @@ public class StatsReporterExtensionTest {
     public void extendTest() {
         RestcommStatsReporterExtension extension = Mockito.mock(RestcommStatsReporterExtension.class);
 
-        RestcommStatsReporter statsReporter = RestcommStatsReporter.getRestcommStatsReporter();
+        RestcommStatsReporter statsReporter = new RestcommStatsReporter();
         statsReporter.getMetricRegistry().counter("counter");
         statsReporter.getMetricRegistry().histogram("histogram");
         statsReporter.getMetricRegistry().meter("meter");
