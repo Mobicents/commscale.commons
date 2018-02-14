@@ -51,6 +51,7 @@ public class RestcommStatsReporter extends ScheduledReporter {
     private String projectName;
     private String projectType;
     private String version;
+    private RestcommStatsReporterExtension restcommStatsReporterExtension;
     private static final TimeUnit rateUnit;
     private static final TimeUnit durationUnit;
     private static final MetricFilter filter;
@@ -96,6 +97,9 @@ public class RestcommStatsReporter extends ScheduledReporter {
             if(getVersion() != null) {
             	values.put("version", getVersion());
             }
+            if (restcommStatsReporterExtension != null) {
+                restcommStatsReporterExtension.extend(values);
+            }
             final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
             values.put("key", gauge.getKey());
@@ -114,6 +118,9 @@ public class RestcommStatsReporter extends ScheduledReporter {
             }
             if(getVersion() != null) {
             	values.put("version", getVersion());
+            }
+            if (restcommStatsReporterExtension != null) {
+                restcommStatsReporterExtension.extend(values);
             }
             long count = counter.getValue().getCount();
             final long timestamp = clock.getTime();
@@ -140,6 +147,9 @@ public class RestcommStatsReporter extends ScheduledReporter {
             }
             if(getVersion() != null) {
             	values.put("version", getVersion());
+            }
+            if (restcommStatsReporterExtension != null) {
+                restcommStatsReporterExtension.extend(values);
             }
             final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
@@ -171,6 +181,9 @@ public class RestcommStatsReporter extends ScheduledReporter {
             if(getVersion() != null) {
             	values.put("version", getVersion());
             }
+            if (restcommStatsReporterExtension != null) {
+                restcommStatsReporterExtension.extend(values);
+            }
             final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
             values.put("key", meter.getKey());
@@ -190,6 +203,9 @@ public class RestcommStatsReporter extends ScheduledReporter {
             }
             if(getVersion() != null) {
             	values.put("version", getVersion());
+            }
+            if (restcommStatsReporterExtension != null) {
+                restcommStatsReporterExtension.extend(values);
             }
             final long timestamp = clock.getTime();
             values.put("timestamp", timestamp);
@@ -257,7 +273,15 @@ public class RestcommStatsReporter extends ScheduledReporter {
 		this.projectType = projectType;
 	}
 
-	public static synchronized RestcommStatsReporter getRestcommStatsReporter() {
+    public RestcommStatsReporterExtension getRestcommStatsReporterExtension() {
+        return restcommStatsReporterExtension;
+    }
+
+    public void setRestcommStatsReporterExtension(RestcommStatsReporterExtension restcommStatsReporterExtension) {
+        this.restcommStatsReporterExtension = restcommStatsReporterExtension;
+    }
+
+    public static synchronized RestcommStatsReporter getRestcommStatsReporter() {
     	if (restcommStatsReporter == null) {
     		restcommStatsReporter = new RestcommStatsReporter(
                 filter,
