@@ -18,9 +18,11 @@ public class StatsReporterExtensionTest {
         statsReporter.getMetricRegistry().counter("counter");
         statsReporter.getMetricRegistry().histogram("histogram");
         statsReporter.getMetricRegistry().meter("meter");
+        statsReporter.getMetricRegistry().timer("timer");
         statsReporter.setRestcommStatsReporterExtension(extension);
         statsReporter.report();
 
-        Mockito.verify(extension, Mockito.times(3)).extend(Mockito.anyMap());
+        int expectedInvocations = statsReporter.getMetricRegistry().getMetrics().size();
+        Mockito.verify(extension, Mockito.times(expectedInvocations)).extend(Mockito.anyMap());
     }
 }
